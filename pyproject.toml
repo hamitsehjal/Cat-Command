@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build_backend"
+
+[project]
+name = "hcat"
+description = "UNIX Cat Command implementation in Python"
+authors = [{name = "Hamit Sehjal", email = "hamitsehjal26@gmail.com"}]
+dynamic = ["version"]
+requires-python = ">=3.7"
+dependencies=[
+"typer ~= 0.13.1",
+]
+readme = "README.md"
