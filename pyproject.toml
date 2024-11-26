@@ -1,6 +1,6 @@
 [build-system]
 requires = ["hatchling"]
-build-backend = "hatchling.build_backend"
+build-backend = "hatchling.build"
 
 [project]
 name = "hcat"
@@ -8,7 +8,26 @@ description = "UNIX Cat Command implementation in Python"
 authors = [{name = "Hamit Sehjal", email = "hamitsehjal26@gmail.com"}]
 dynamic = ["version"]
 requires-python = ">=3.7"
-dependencies=[
+dependencies = [
 "typer ~= 0.13.1",
 ]
 readme = "README.md"
+keywords = [
+"python",
+"cli",
+"typer",
+"cat"
+]
+
+[project.scripts]
+hcat = "hcat:cli"
+
+[tool.hatch.version]
+path = "hcat/__version__.py"
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+"hcat",
+"pyproject.toml",
+"README.md"
+]
