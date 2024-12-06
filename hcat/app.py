@@ -1,37 +1,44 @@
 import sys
 import typer
-from typing_extensions import Annotated, List
+from typing import Annotated, List, IO
 
 
-def print_loop() -> None:
-    try:
-        while True:
-            text = input()
-            print(text)
-    except EOFError:
-        sys.stdout.flush()
+class LineFormatter:
+    def __init__(self, add_line_number: bool = False):
+        self.add_line_number = add_line_number
+        self.counter = 1
+
+    def format(self, line: str):
+        if self.add_line_number:
+            formatted_line = f"\t{self.counter} {line}"
+            self.counter += 1
+            return formatted_line
+        else:
+            return line
 
 
-def print_file(file, add_line_number: bool = False) -> None:
-    if add_line_number:
-        counter = 1
-        for line in file:
-            print(f"{counter}: {line}", end="")
-            counter += 1
-    else:
-        for line in file:
-            print(line, end="")
+def read_from_file(file: IO):
+    for line in file:
+        yield line
 
 
-def print_text(add_line_number=False) -> None:
-    if add_line_number:
-        counter = 1
-        for line in sys.stdin:
-            print(f"{counter}: {line}", end="")
-            counter += 1
-    else:
-        for line in sys.stdin:
-            print(line, end="")
+def read_from_stdin():
+    for line in sys.stdin.readlines():
+        yield line
+
+
+def read_from_stdin_interactive():
+    while True:
+        try:
+            line = input()
+            yield line + "\n"
+        except EOFError:
+            break
+
+
+def process_lines(lines: List[str], formatter: LineFormatter):
+    for line in lines:
+        print(formatter.format(line), end="")
 
 
 def main(
@@ -48,27 +55,32 @@ def main(
         ),
     ] = False,
 ) -> None:
-    if args is not None:
-        for filename in args:
-            try:
-                if filename == "-":
-                    # read from standard input
-                    print_loop()
-                else:
-                    with open(filename, "r") as file:
-                        print_file(file, add_line_number)
+    formatter = LineFormatter(add_line_number)
 
-            except FileNotFoundError:
-                print(f"\nhcat: File {filename} doesn't exist", end="\n\n")
-            except PermissionError:
-                print(f"\nhcat: File {filename} cannot be accessed", end="\n\n")
+    if args:
+        for filename in args:
+            if filename == "-":
+                # read from standard input
+                lines = read_from_stdin_interactive()
+                process_lines(lines, formatter)
+            else:
+                try:
+                    with open(filename, "r") as file:
+                        lines = read_from_file(file)
+                        process_lines(lines, formatter)
+                except FileNotFoundError:
+                    print(f"\nhcat: File {filename} doesn't exist", end="\n\n")
+                except PermissionError:
+                    print(f"\nhcat: File {filename} cannot be accessed", end="\n\n")
 
     elif not sys.stdin.isatty():
         # Data is being piped to standard input
-        print_text(add_line_number)
+        lines = read_from_stdin()
+        process_lines(lines, formatter)
     else:
         # Receiving input from stdin and printing it immediately
-        print_loop()
+        lines = read_from_stdin_interactive()
+        process_lines(lines, formatter)
 
 
 def entry_point() -> None:
